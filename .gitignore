@@ -1,0 +1,6 @@
+dist/
+.claude/
+CLAUDE.md
+*.tsv
+*.log
+hashes.txt

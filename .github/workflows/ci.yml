@@ -1,0 +1,34 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: lint
+        run: |
+          unformatted=$(gofmt -l .)
+          [ -z "$unformatted" ] || { echo "not gofmt-ed: $unformatted" >&2; exit 1; }
+          go vet ./...
+      - run: go mod verify
+      - run: go test -mod=readonly -race ./...
+      - name: smoke test the built binary
+        run: |
+          ./build.sh
+          ./dist/picfind-linux-x86_64 --version
+          ./dist/picfind-linux-x86_64 --help >/dev/null
